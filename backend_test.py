@@ -417,6 +417,339 @@ class EdRinaRestoTester:
         
         return True
     
+    def test_order_modification_workflow(self):
+        """Test complete order modification workflow - NEW FEATURE"""
+        print("\n=== Testing Order Modification Workflow (NEW FEATURE) ===")
+        
+        if not all([self.server_token, self.chef_token]):
+            self.log_test("Order Modification Workflow", False, "Missing required role tokens")
+            return False
+        
+        # Get menu items for order
+        response = self.make_request("GET", "/menu")
+        if not response or response.status_code != 200:
+            self.log_test("Order Modification Workflow", False, "Cannot retrieve menu items")
+            return False
+        
+        menu_items = response.json()
+        if len(menu_items) < 3:
+            self.log_test("Order Modification Workflow", False, "Not enough menu items for testing")
+            return False
+        
+        # Step 1: Server creates initial order
+        initial_order_data = {
+            "table_number": 5,
+            "items": [
+                {
+                    "menu_item_id": menu_items[0]["id"],
+                    "menu_item_name": menu_items[0]["name"],
+                    "quantity": 2,
+                    "price": menu_items[0]["price"]
+                },
+                {
+                    "menu_item_id": menu_items[1]["id"],
+                    "menu_item_name": menu_items[1]["name"],
+                    "quantity": 1,
+                    "price": menu_items[1]["price"]
+                }
+            ]
+        }
+        
+        response = self.make_request("POST", "/orders", initial_order_data, self.server_token)
+        if not response or response.status_code not in [200, 201]:
+            error_msg = response.text if response else "No response"
+            self.log_test("Create Order for Modification", False, f"Failed to create initial order: {error_msg}")
+            return False
+        
+        order = response.json()
+        order_id = order["id"]
+        initial_total = order["total_amount"]
+        
+        if order.get("status") != "in_kitchen":
+            self.log_test("Create Order for Modification", False, f"Order status should be 'in_kitchen', got: {order.get('status')}")
+            return False
+        
+        self.log_test("Create Order for Modification", True, f"Initial order created with total: {initial_total} TND")
+        
+        # Step 2: Test order modification - Add new item
+        modified_items = [
+            # Keep first item with same quantity
+            {
+                "menu_item_id": menu_items[0]["id"],
+                "menu_item_name": menu_items[0]["name"],
+                "quantity": 2,
+                "price": menu_items[0]["price"]
+            },
+            # Increase quantity of second item
+            {
+                "menu_item_id": menu_items[1]["id"],
+                "menu_item_name": menu_items[1]["name"],
+                "quantity": 3,  # Changed from 1 to 3
+                "price": menu_items[1]["price"]
+            },
+            # Add new third item
+            {
+                "menu_item_id": menu_items[2]["id"],
+                "menu_item_name": menu_items[2]["name"],
+                "quantity": 1,
+                "price": menu_items[2]["price"]
+            }
+        ]
+        
+        modification_data = {"items": modified_items}
+        response = self.make_request("PUT", f"/orders/{order_id}", modification_data, self.server_token)
+        
+        if response and response.status_code == 200:
+            modified_order = response.json()
+            new_total = modified_order["total_amount"]
+            
+            # Verify total recalculation
+            expected_total = sum(item["price"] * item["quantity"] for item in modified_items)
+            if abs(new_total - expected_total) < 0.01:  # Allow for floating point precision
+                self.log_test("Order Modification - Add/Change Items", True, f"Order modified successfully. Total changed from {initial_total} to {new_total} TND")
+            else:
+                self.log_test("Order Modification - Add/Change Items", False, f"Total calculation incorrect. Expected: {expected_total}, Got: {new_total}")
+        else:
+            error_msg = response.text if response else "No response"
+            self.log_test("Order Modification - Add/Change Items", False, f"Failed to modify order: {error_msg}")
+            return False
+        
+        # Step 3: Test removing items from order
+        reduced_items = [
+            # Keep only first item
+            {
+                "menu_item_id": menu_items[0]["id"],
+                "menu_item_name": menu_items[0]["name"],
+                "quantity": 1,  # Reduced quantity
+                "price": menu_items[0]["price"]
+            }
+        ]
+        
+        reduction_data = {"items": reduced_items}
+        response = self.make_request("PUT", f"/orders/{order_id}", reduction_data, self.server_token)
+        
+        if response and response.status_code == 200:
+            reduced_order = response.json()
+            final_total = reduced_order["total_amount"]
+            expected_final_total = menu_items[0]["price"] * 1
+            
+            if abs(final_total - expected_final_total) < 0.01:
+                self.log_test("Order Modification - Remove Items", True, f"Items removed successfully. Total now: {final_total} TND")
+            else:
+                self.log_test("Order Modification - Remove Items", False, f"Total calculation incorrect after removal. Expected: {expected_final_total}, Got: {final_total}")
+        else:
+            error_msg = response.text if response else "No response"
+            self.log_test("Order Modification - Remove Items", False, f"Failed to remove items: {error_msg}")
+        
+        return True
+    
+    def test_order_modification_edge_cases(self):
+        """Test order modification edge cases and restrictions"""
+        print("\n=== Testing Order Modification Edge Cases ===")
+        
+        if not all([self.server_token, self.chef_token, self.cashier_token]):
+            self.log_test("Order Modification Edge Cases", False, "Missing required role tokens")
+            return False
+        
+        # Create a second server token for testing cross-server restrictions
+        second_server_data = {"username": "serveur_test2", "password": "test123", "role": "serveur"}
+        response = self.make_request("POST", "/auth/register", second_server_data, self.admin_token)
+        
+        second_server_token = None
+        if response and response.status_code in [200, 201]:
+            # Login as second server
+            login_response = self.make_request("POST", "/auth/login", {
+                "username": "serveur_test2",
+                "password": "test123"
+            })
+            if login_response and login_response.status_code == 200:
+                second_server_token = login_response.json()["access_token"]
+        
+        # Get menu items
+        response = self.make_request("GET", "/menu")
+        if not response or response.status_code != 200:
+            self.log_test("Order Modification Edge Cases", False, "Cannot retrieve menu items")
+            return False
+        
+        menu_items = response.json()
+        
+        # Create order with first server
+        order_data = {
+            "table_number": 7,
+            "items": [
+                {
+                    "menu_item_id": menu_items[0]["id"],
+                    "menu_item_name": menu_items[0]["name"],
+                    "quantity": 1,
+                    "price": menu_items[0]["price"]
+                }
+            ]
+        }
+        
+        response = self.make_request("POST", "/orders", order_data, self.server_token)
+        if not response or response.status_code not in [200, 201]:
+            self.log_test("Order Modification Edge Cases", False, "Failed to create test order")
+            return False
+        
+        order = response.json()
+        order_id = order["id"]
+        
+        # Test 1: Different server trying to modify order (should fail)
+        if second_server_token:
+            modification_data = {
+                "items": [
+                    {
+                        "menu_item_id": menu_items[0]["id"],
+                        "menu_item_name": menu_items[0]["name"],
+                        "quantity": 2,
+                        "price": menu_items[0]["price"]
+                    }
+                ]
+            }
+            
+            response = self.make_request("PUT", f"/orders/{order_id}", modification_data, second_server_token)
+            if response and response.status_code == 403:
+                self.log_test("Cross-Server Modification Restriction", True, "Different server correctly denied order modification")
+            else:
+                self.log_test("Cross-Server Modification Restriction", False, f"Different server should be denied, got status: {response.status_code if response else 'None'}")
+        
+        # Test 2: Chef marks order as ready
+        chef_update = {"status": "ready"}
+        response = self.make_request("PUT", f"/orders/{order_id}", chef_update, self.chef_token)
+        if not response or response.status_code != 200:
+            self.log_test("Order Modification Edge Cases", False, "Failed to mark order as ready")
+            return False
+        
+        # Test 3: Server trying to modify order after it's marked ready (should fail)
+        modification_data = {
+            "items": [
+                {
+                    "menu_item_id": menu_items[0]["id"],
+                    "menu_item_name": menu_items[0]["name"],
+                    "quantity": 3,
+                    "price": menu_items[0]["price"]
+                }
+            ]
+        }
+        
+        response = self.make_request("PUT", f"/orders/{order_id}", modification_data, self.server_token)
+        if response and response.status_code == 403:
+            self.log_test("Modification After Ready Restriction", True, "Server correctly denied modification of ready order")
+        else:
+            self.log_test("Modification After Ready Restriction", False, f"Server should be denied modification of ready order, got status: {response.status_code if response else 'None'}")
+        
+        # Test 4: Cashier processes payment
+        payment_update = {"status": "paid"}
+        response = self.make_request("PUT", f"/orders/{order_id}", payment_update, self.cashier_token)
+        if not response or response.status_code != 200:
+            self.log_test("Order Modification Edge Cases", False, "Failed to process payment")
+            return False
+        
+        # Test 5: Server trying to modify paid order (should fail)
+        response = self.make_request("PUT", f"/orders/{order_id}", modification_data, self.server_token)
+        if response and response.status_code == 403:
+            self.log_test("Modification After Payment Restriction", True, "Server correctly denied modification of paid order")
+        else:
+            self.log_test("Modification After Payment Restriction", False, f"Server should be denied modification of paid order, got status: {response.status_code if response else 'None'}")
+        
+        return True
+    
+    def test_order_modification_chef_workflow(self):
+        """Test chef workflow with modified orders"""
+        print("\n=== Testing Chef Workflow with Modified Orders ===")
+        
+        if not all([self.server_token, self.chef_token]):
+            self.log_test("Chef Workflow with Modified Orders", False, "Missing required role tokens")
+            return False
+        
+        # Get menu items
+        response = self.make_request("GET", "/menu")
+        if not response or response.status_code != 200:
+            self.log_test("Chef Workflow with Modified Orders", False, "Cannot retrieve menu items")
+            return False
+        
+        menu_items = response.json()
+        
+        # Create and modify an order
+        order_data = {
+            "table_number": 8,
+            "items": [
+                {
+                    "menu_item_id": menu_items[0]["id"],
+                    "menu_item_name": menu_items[0]["name"],
+                    "quantity": 1,
+                    "price": menu_items[0]["price"]
+                }
+            ]
+        }
+        
+        # Create order
+        response = self.make_request("POST", "/orders", order_data, self.server_token)
+        if not response or response.status_code not in [200, 201]:
+            self.log_test("Chef Workflow with Modified Orders", False, "Failed to create order")
+            return False
+        
+        order = response.json()
+        order_id = order["id"]
+        
+        # Modify order (add more items)
+        modified_items = [
+            {
+                "menu_item_id": menu_items[0]["id"],
+                "menu_item_name": menu_items[0]["name"],
+                "quantity": 2,  # Increased quantity
+                "price": menu_items[0]["price"]
+            },
+            {
+                "menu_item_id": menu_items[1]["id"],
+                "menu_item_name": menu_items[1]["name"],
+                "quantity": 1,  # Added new item
+                "price": menu_items[1]["price"]
+            }
+        ]
+        
+        modification_data = {"items": modified_items}
+        response = self.make_request("PUT", f"/orders/{order_id}", modification_data, self.server_token)
+        if not response or response.status_code != 200:
+            self.log_test("Chef Workflow with Modified Orders", False, "Failed to modify order")
+            return False
+        
+        modified_order = response.json()
+        self.log_test("Order Modified Before Chef", True, f"Order modified successfully, new total: {modified_order['total_amount']} TND")
+        
+        # Chef marks the modified order as ready
+        chef_update = {"status": "ready"}
+        response = self.make_request("PUT", f"/orders/{order_id}", chef_update, self.chef_token)
+        if response and response.status_code == 200:
+            ready_order = response.json()
+            if ready_order.get("status") == "ready" and "kitchen_ready_at" in ready_order:
+                self.log_test("Chef Mark Modified Order Ready", True, "Chef successfully marked modified order as ready")
+            else:
+                self.log_test("Chef Mark Modified Order Ready", False, f"Order status or timestamp incorrect: {ready_order}")
+        else:
+            error_msg = response.text if response else "No response"
+            self.log_test("Chef Mark Modified Order Ready", False, f"Failed to mark order ready: {error_msg}")
+        
+        # Verify server can no longer modify after chef marks ready
+        final_modification = {
+            "items": [
+                {
+                    "menu_item_id": menu_items[0]["id"],
+                    "menu_item_name": menu_items[0]["name"],
+                    "quantity": 5,
+                    "price": menu_items[0]["price"]
+                }
+            ]
+        }
+        
+        response = self.make_request("PUT", f"/orders/{order_id}", final_modification, self.server_token)
+        if response and response.status_code == 403:
+            self.log_test("No Modification After Chef Ready", True, "Server correctly denied modification after chef marked ready")
+        else:
+            self.log_test("No Modification After Chef Ready", False, f"Server should be denied modification, got status: {response.status_code if response else 'None'}")
+        
+        return True
+    
     def run_all_tests(self):
         """Run all tests in sequence"""
         print("🚀 Starting EdRina Resto Backend API Tests")
