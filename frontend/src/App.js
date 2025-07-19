@@ -357,9 +357,19 @@ const ServerDashboard = () => {
                     </span>
                   ))}
                 </div>
-                <p className="text-xs text-gray-500 mt-2">
-                  Créée: {new Date(order.created_at).toLocaleString('fr-FR')}
-                </p>
+                <div className="flex justify-between items-center mt-2">
+                  <p className="text-xs text-gray-500">
+                    Créée: {new Date(order.created_at).toLocaleString('fr-FR')}
+                  </p>
+                  {order.status === 'in_kitchen' && (
+                    <button
+                      onClick={() => startEditOrder(order)}
+                      className="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700"
+                    >
+                      Modifier
+                    </button>
+                  )}
+                </div>
               </div>
             ))}
           </div>
