@@ -260,14 +260,9 @@ metadata:
   run_ui: false
 
 test_plan:
-  current_focus:
-    - "Authentication system with JWT and role-based access"
-    - "Order management with workflow"
-    - "User management system (admin only)"
-    - "Menu management system"
-    - "System initialization with sample data"
+  current_focus: []
   stuck_tasks: []
-  test_all: true
+  test_all: false
   test_priority: "high_first"
 
 agent_communication:
