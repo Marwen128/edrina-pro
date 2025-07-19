@@ -258,6 +258,40 @@ const ServerDashboard = () => {
     }
   };
 
+  const startEditOrder = (order) => {
+    setEditingOrder(order);
+    setCurrentOrder([...order.items]);
+    setSelectedTable(order.table_number);
+    setShowEditOrder(true);
+  };
+
+  const updateExistingOrder = async () => {
+    if (currentOrder.length === 0) {
+      alert('Une commande doit contenir au moins un article');
+      return;
+    }
+
+    try {
+      await axios.put(`${API}/orders/${editingOrder.id}`, {
+        items: currentOrder
+      });
+      setCurrentOrder([]);
+      setShowEditOrder(false);
+      setEditingOrder(null);
+      fetchOrders();
+      alert('Commande modifiée avec succès!');
+    } catch (error) {
+      console.error('Failed to update order:', error);
+      alert('Erreur lors de la modification de la commande');
+    }
+  };
+
+  const cancelEdit = () => {
+    setCurrentOrder([]);
+    setShowEditOrder(false);
+    setEditingOrder(null);
+  };
+
   const getOrderTotal = () => {
     return currentOrder.reduce((total, item) => total + (item.price * item.quantity), 0);
   };
