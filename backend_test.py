@@ -764,6 +764,9 @@ class EdRinaRestoTester:
             ("Role-Based Login", self.test_role_based_login),
             ("Menu Management", self.test_menu_management),
             ("Order Workflow", self.test_order_workflow),
+            ("Order Modification Workflow", self.test_order_modification_workflow),
+            ("Order Modification Edge Cases", self.test_order_modification_edge_cases),
+            ("Chef Workflow with Modified Orders", self.test_order_modification_chef_workflow),
             ("Role-Based Access Control", self.test_role_based_access_control),
             ("Table Validation", self.test_table_validation)
         ]
@@ -800,6 +803,11 @@ class EdRinaRestoTester:
             "System Initialization",
             "Admin Login", 
             "Server Create Order",
+            "Order Modification - Add/Change Items",
+            "Order Modification - Remove Items",
+            "Cross-Server Modification Restriction",
+            "Modification After Ready Restriction",
+            "Chef Mark Modified Order Ready",
             "Chef Mark Order Ready",
             "Cashier Process Payment"
         ]
