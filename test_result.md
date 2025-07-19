@@ -167,15 +167,18 @@ backend:
 
   - task: "System initialization with sample data"
     implemented: true
-    working: "NA"
+    working: true
     file: "/app/backend/server.py"
     stuck_count: 0
     priority: "medium"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
         - working: "NA"
         - agent: "main"
         - comment: "Implemented initialization endpoint that creates default admin user (admin/admin123) and sample menu items with Tunisian dishes"
+        - working: true
+        - agent: "testing"
+        - comment: "TESTED: System initialization working perfectly. /api/init endpoint successfully creates default admin user (admin/admin123) and 5 sample Tunisian menu items (Couscous Traditionnel, Tajine Agneau, Brick à l'oeuf, Salade Mechouia, Makloub). Prevents duplicate initialization."
 
 frontend:
   - task: "Authentication UI with login page"
