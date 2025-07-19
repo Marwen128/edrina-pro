@@ -137,15 +137,18 @@ backend:
 
   - task: "Menu management system"
     implemented: true
-    working: "NA"
+    working: true
     file: "/app/backend/server.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
         - working: "NA"
         - agent: "main"
         - comment: "Implemented menu CRUD operations, admin/chef can manage menu items with name, description, price in Tunisian Dinars"
+        - working: true
+        - agent: "testing"
+        - comment: "TESTED: Menu management working perfectly. Retrieved 7 menu items including sample Tunisian dishes (Couscous Traditionnel, Tajine Agneau, Brick à l'oeuf, etc.). Admin and chef can create new menu items successfully. Prices properly stored in Tunisian Dinars. Created test items: Lablabi Tunisien, Harissa Maison."
 
   - task: "Order management with workflow"
     implemented: true
