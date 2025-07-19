@@ -241,17 +241,17 @@ frontend:
         - agent: "main"
         - comment: "Implemented admin interface with tabs for orders, users, menu, statistics. User creation/deletion, menu management, comprehensive order view, revenue statistics"
 
-  - task: "Responsive UI with blue theme"
+  - task: "Order modification for servers (add/remove items before ready)"
     implemented: true
     working: "NA"
-    file: "/app/frontend/src/App.css"
+    file: "/app/frontend/src/App.js"
     stuck_count: 0
-    priority: "medium"
-    needs_retesting: false
+    priority: "high"
+    needs_retesting: true
     status_history:
         - working: "NA"
         - agent: "main"
-        - comment: "Implemented EdRina Resto blue theme, responsive design for desktop/tablet/mobile, custom animations, status badges, required footer"
+        - comment: "Added order modification functionality - servers can now modify orders that are 'in_kitchen' status. Features: modify button on pending orders, edit modal with current items pre-loaded, add/remove items, update quantities, total recalculation, visual comparison of old vs new total"
 
 metadata:
   created_by: "main_agent"
