@@ -122,15 +122,18 @@ backend:
 
   - task: "User management system (admin only)"
     implemented: true
-    working: "NA"
+    working: true
     file: "/app/backend/server.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
         - working: "NA"
         - agent: "main"
         - comment: "Implemented user CRUD operations, admin can create/delete users, role assignment, get all users endpoint"
+        - working: true
+        - agent: "testing"
+        - comment: "TESTED: User management working perfectly. Admin can create users with all 4 roles (serveur, chef, caisse, admin), retrieve all users (4 users total including admin), and role-based restrictions properly enforced. Created test users: serveur_marie, chef_ahmed, caisse_fatma."
 
   - task: "Menu management system"
     implemented: true
