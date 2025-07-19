@@ -267,6 +267,6 @@ test_plan:
 
 agent_communication:
     - agent: "main"
-    - message: "Implemented complete EdRina Resto restaurant management system with role-based dashboards, order workflow, and all requested features. Ready for backend testing to verify all API endpoints work correctly. Dependencies added: bcrypt for password hashing, JWT for authentication."
+    - message: "ENHANCEMENT ADDED: Order modification functionality for servers. Servers can now modify their orders (add/remove items, change quantities) as long as the order status is 'in_kitchen' (not yet marked ready by chef). Added edit modal with visual feedback and comparison of totals. Backend already supported this via PUT /api/orders/{id} endpoint. Ready for testing the new modification workflow."
     - agent: "testing"
     - message: "Completed comprehensive backend testing. All critical functionality working perfectly: system initialization, authentication, user management, menu management, and complete order workflow (server→chef→cashier). Role-based access control verified. Minor network timeout issues on some validation tests but core restaurant operations are fully functional."
