@@ -176,6 +176,8 @@ const ServerDashboard = () => {
   const [selectedTable, setSelectedTable] = useState(1);
   const [currentOrder, setCurrentOrder] = useState([]);
   const [showCreateOrder, setShowCreateOrder] = useState(false);
+  const [showEditOrder, setShowEditOrder] = useState(false);
+  const [editingOrder, setEditingOrder] = useState(null);
   const { user, logout } = useAuth();
 
   useEffect(() => {
