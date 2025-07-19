@@ -152,15 +152,18 @@ backend:
 
   - task: "Order management with workflow"
     implemented: true
-    working: "NA"
+    working: true
     file: "/app/backend/server.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
         - working: "NA"
         - agent: "main"
         - comment: "Implemented complete order workflow: servers create orders for tables 1-8, orders go to kitchen, chef marks ready, cashier processes payment. Includes timestamps and status tracking"
+        - working: true
+        - agent: "testing"
+        - comment: "TESTED: Complete order workflow working perfectly! Server creates order for table 5 (status: in_kitchen), chef views kitchen orders and marks ready (with kitchen_ready_at timestamp), cashier views ready orders and processes payment (status: paid with paid_at timestamp). Role-based order visibility working correctly. Total amount calculated properly in TND."
 
   - task: "System initialization with sample data"
     implemented: true
