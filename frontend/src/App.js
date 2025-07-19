@@ -494,6 +494,126 @@ const ServerDashboard = () => {
         </div>
       )}
 
+      {/* Edit Order Modal */}
+      {showEditOrder && editingOrder && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-4">
+              <div>
+                <h2 className="text-2xl font-bold text-orange-600">Modifier la Commande</h2>
+                <p className="text-gray-600">Table {editingOrder.table_number} - Commande #{editingOrder.id.slice(-6)}</p>
+              </div>
+              <button
+                onClick={cancelEdit}
+                className="text-gray-500 hover:text-gray-700 text-2xl"
+              >
+                ×
+              </button>
+            </div>
+
+            <div className="bg-orange-50 border border-orange-200 p-3 rounded-lg mb-6">
+              <p className="text-orange-800 text-sm">
+                💡 <strong>Modification possible</strong> - Cette commande est en cours de préparation en cuisine. 
+                Vous pouvez ajouter, supprimer ou modifier les quantités.
+              </p>
+            </div>
+
+            <div className="grid md:grid-cols-2 gap-6">
+              {/* Menu */}
+              <div>
+                <h3 className="text-lg font-semibold mb-4">Menu - Ajouter des articles</h3>
+                <div className="grid gap-3">
+                  {menu.map(item => (
+                    <div key={item.id} className="border rounded p-3 hover:shadow-md transition-shadow">
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <h4 className="font-medium">{item.name}</h4>
+                          <p className="text-sm text-gray-600">{item.description}</p>
+                          <p className="text-lg font-bold text-blue-600">{item.price.toFixed(2)} TND</p>
+                        </div>
+                        <button
+                          onClick={() => addToOrder(item)}
+                          className="bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 text-sm"
+                        >
+                          Ajouter
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Current Order */}
+              <div>
+                <h3 className="text-lg font-semibold mb-4">Commande modifiée</h3>
+                <div className="border rounded p-4 min-h-[300px]">
+                  {currentOrder.length === 0 ? (
+                    <p className="text-gray-500">La commande ne peut pas être vide</p>
+                  ) : (
+                    <div className="space-y-3">
+                      {currentOrder.map(item => (
+                        <div key={item.menu_item_id} className="flex justify-between items-center border-b pb-2">
+                          <div>
+                            <h4 className="font-medium">{item.menu_item_name}</h4>
+                            <p className="text-sm text-gray-600">{item.price.toFixed(2)} TND chacun</p>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => updateQuantity(item.menu_item_id, item.quantity - 1)}
+                              className="bg-gray-200 w-8 h-8 rounded-full hover:bg-gray-300"
+                            >
+                              -
+                            </button>
+                            <span className="w-8 text-center">{item.quantity}</span>
+                            <button
+                              onClick={() => updateQuantity(item.menu_item_id, item.quantity + 1)}
+                              className="bg-gray-200 w-8 h-8 rounded-full hover:bg-gray-300"
+                            >
+                              +
+                            </button>
+                            <button
+                              onClick={() => removeFromOrder(item.menu_item_id)}
+                              className="bg-red-500 text-white w-8 h-8 rounded-full hover:bg-red-600 ml-2"
+                              title="Supprimer cet article"
+                            >
+                              ×
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                      <div className="pt-3 border-t">
+                        <div className="flex justify-between text-sm text-gray-600">
+                          <span>Ancien total: {editingOrder.total_amount.toFixed(2)} TND</span>
+                          <span className="text-lg font-bold text-blue-600">
+                            Nouveau total: {getOrderTotal().toFixed(2)} TND
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+                
+                <div className="mt-4 flex gap-3">
+                  <button
+                    onClick={updateExistingOrder}
+                    disabled={currentOrder.length === 0}
+                    className="flex-1 bg-orange-600 text-white py-2 px-4 rounded hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Confirmer les modifications
+                  </button>
+                  <button
+                    onClick={cancelEdit}
+                    className="bg-gray-500 text-white py-2 px-4 rounded hover:bg-gray-600"
+                  >
+                    Annuler
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Footer */}
       <footer className="bg-gray-800 text-white p-4 text-center mt-8">
         <p>Marwen Ben Jemaa - All rights reserved by EdRina Resto.</p>
